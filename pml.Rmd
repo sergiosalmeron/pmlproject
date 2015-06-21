@@ -1,0 +1,86 @@
+---
+title: "Practical Machine Learning Project"
+author: "Sergio S."
+date: "21 de junio de 2015"
+output: html_document
+---
+##Introduction
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+
+##Data loading
+First step is to download and load the data:
+```{r, cache=TRUE}
+train <- read.csv("pml-training.csv", na.strings=c("", "NA", "NULL"))
+test <- read.csv("pml-testing.csv", na.strings=c("", "NA", "NULL"))
+#let's see the datasets dimmensions
+dim(train)
+dim(test)
+```
+
+##Data preprocessing
+Next step is to prepare the data so it can be clean and helpful for the predictions.
+
+As we have seen, there are `r dim(train)[2]` variables for `r dim(train)[1]` cases. We are goint to discard some of the variables included in the dataset that may be useless.
+
+The first variables in the dataset may not throw much information for the prediction, so they will be discarded:
+```{r}
+names(train)
+train.2 = train[ , -c(1, 2, 3, 4, 5, 6, 7)];
+```
+We are going to see the number of NAs in the variables and discard those variables with many NA values
+```{r}
+unique(colSums(is.na(train.2)))
+summary(colSums(is.na(train.2)))
+train.2 <- train.2[ , colSums(is.na(train.2)) < mean(colSums(is.na(train.2)))]
+dim(train.2)
+```
+We are also going to discard those variables with low variability
+```{r}
+library(caret)
+train.2 = train.2[,nearZeroVar(train.2[sapply(train.2, is.numeric)], saveMetrics = TRUE)[, 'nzv']==0]
+dim(train.2)
+any(is.na(train.2));
+```
+And remove those variables highly correlated
+```{r}
+correlation <- cor(train.2[, names(train.2) != "classe"]) 
+heatmap(correlation)
+train.3 = train.2[,-findCorrelation(correlation, cutoff = .90)]
+dim(train.3)
+```
+
+###Data partitioning (cross validation)
+Now we are going to create different partitions from the training dataset (0.7 for training, 0.3 for test) for cros validation:
+```{r}
+partition <- createDataPartition(y=train.3$classe, p=0.7, list=FALSE)
+trainset <- train.3[partition,]; 
+testset <- train.3[-partition,]
+dim(trainset)
+dim(testset)
+```
+
+###Data analysis
+To perform the prediction, we are going to use random forests due to its high efficacy and high accuracy.
+```{r, cache=TRUE}
+#model <- train(classe ~., data = trainset, method = "rf");
+#model <- train(classe ~., data = trainset, method = "rf", trControl=trainControl(method="cv",number=3),allowParallel=TRUE)
+require(randomForest)
+rf.model=randomForest(classe~.,data=trainset,ntree=500, importance=TRUE)
+```
+Once we have generated the model, we test it with the test partition we created and evaluate the results
+```{r}
+prediction=predict(rf.model,testset,type="class")
+results = with(testset,table(prediction,classe))
+results
+accuracy<-sum(diag(results))/dim(testset)[1]
+accuracy
+```
+As we can see, the model has an accuracy of `r accuracy`, which is pretty good.
+
+###Result prediction
+
+As last step, we are going to use the generated model with the test set and see the results:
+```{r}
+projectresults <- predict(rf.model, test)
+projectresults
+```
