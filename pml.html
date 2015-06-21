@@ -64,7 +64,7 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 </div>
 <div id="data-loading" class="section level2">
 <h2>Data loading</h2>
-<p>First step is to download and load the data:</p>
+<p>First step is to load the data:</p>
 <pre class="r"><code>train &lt;- read.csv(&quot;pml-training.csv&quot;, na.strings=c(&quot;&quot;, &quot;NA&quot;, &quot;NULL&quot;))
 test &lt;- read.csv(&quot;pml-testing.csv&quot;, na.strings=c(&quot;&quot;, &quot;NA&quot;, &quot;NULL&quot;))
 #let's see the datasets dimmensions
@@ -214,15 +214,15 @@ results = with(testset,table(prediction,classe))
 results</code></pre>
 <pre><code>##           classe
 ## prediction    A    B    C    D    E
-##          A 1674    9    0    0    0
-##          B    0 1129   10    0    0
-##          C    0    1 1016   12    1
-##          D    0    0    0  951    4
-##          E    0    0    0    1 1077</code></pre>
+##          A 1669    5    0    0    0
+##          B    4 1133    5    0    0
+##          C    0    1 1019   10    0
+##          D    0    0    2  953    1
+##          E    1    0    0    1 1081</code></pre>
 <pre class="r"><code>accuracy&lt;-sum(diag(results))/dim(testset)[1]
 accuracy</code></pre>
-<pre><code>## [1] 0.9935429</code></pre>
-<p>As we can see, the model has an accuracy of 0.9935429, which is pretty good.</p>
+<pre><code>## [1] 0.9949023</code></pre>
+<p>As we can see, the model has an accuracy of 0.9949023, which is pretty good.</p>
 </div>
 <div id="result-prediction" class="section level3">
 <h3>Result prediction</h3>
